@@ -1,0 +1,70 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  php-apache:
+    build:
+      context: ./php
+    container_name: tirocerto_php_apache
+    ports:
+      - "8080:80" # Expõe a porta 80 do container na porta 8080 do host
+    volumes:
+      - ./php/src:/var/www/html # Monta o código PHP no diretório do Apache
+      - ./php/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf # Configuração do Apache
+    depends_on:
+      - mysql
+      - nodejs-cache
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      NODEJS_CACHE_URL: http://nodejs-cache:3000 # URL interna para o serviço Node.js
+    networks:
+      - tirocerto_network
+
+  nodejs-cache:
+    build:
+      context: ./nodejs
+    container_name: tirocerto_nodejs_cache
+    ports:
+      - "3000:3000" # Expõe a porta 3000 do container na porta 3000 do host
+    volumes:
+      - ./nodejs:/usr/src/app # Monta o código Node.js
+      - /usr/src/app/node_modules # Evita sobrescrever node_modules do host
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE} # Usará o mesmo DB ou um separado? Por ora, o mesmo.
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      API_FOOTBALL_KEY: ${API_FOOTBALL_KEY} # Chave da API externa (a ser definida)
+      API_REQUEST_LIMIT: 100 # Limite diário de requisições
+    depends_on:
+      - mysql
+    command: node server.js
+    networks:
+      - tirocerto_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: tirocerto_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306" # Expõe a porta do MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql # Persiste os dados do banco
+      - ./mysql/init:/docker-entrypoint-initdb.d # Scripts SQL de inicialização
+    networks:
+      - tirocerto_network
+
+volumes:
+  mysql_data:
+
+networks:
+  tirocerto_network:
+    driver: bridge

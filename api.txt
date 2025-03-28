@@ -1,0 +1,70 @@
+api externa:
+
+Endpoint Base
+Você pode acessar nossa API através do endpoint base:
+
+https://api.api-futebol.com.br/v1/
+
+Campeonatos
+Retorna a lista de campeonatos disponíveis.
+
+GET https://api.api-futebol.com.br/v1/campeonatos
+Exemplo
+
+curl -X GET https://api.api-futebol.com.br/v1/campeonatos \
+-H "Authorization: Bearer [API_KEY]"
+
+Campeonato
+Retorna CAMPEONATO pelo campeonato_id
+
+GET https://api.api-futebol.com.br/v1/campeonatos/{campeonato_id}
+Parâmetros
+Substituta campeonato_id pelo ID do campeonato que deseja buscar.
+
+Para listar os IDs dos campeonatos disponíveis utilize o endpoint /v1/campeonatos
+
+Exemplo
+
+curl -X GET https://api.api-futebol.com.br/v1/campeonatos/2 \
+-H "Authorization: Bearer [API_KEY]"
+
+Tabela
+Retorna todas as tabelas de um CAMPEONATO por campeonato_id. Apenas campeonatos do tipo pontos-corridos ou grupos
+
+GET https://api.api-futebol.com.br/v1/campeonatos/{campeonato_id}/tabela
+Parâmetros
+Substituta campeonato_id pelo ID do campeonato que deseja buscar.
+
+Para listar os IDs dos campeonatos disponíveis utilize o endpoint /v1/campeonatos
+
+Exemplo
+
+curl -X GET https://api.api-futebol.com.br/v1/campeonatos/2/tabela \
+-H "Authorization: Bearer [API_KEY]"
+
+Rodadas
+Retorna todas as rodadas de um CAMPEONATO por campeonato_id.
+
+Apenas para campeonatos do tipo pontos corridos
+
+GET https://api.api-futebol.com.br/v1/campeonatos/{campeonato_id}/rodadas
+Parâmetros
+Substituta campeonato_id pelo ID do campeonato que deseja buscar.
+
+Para listar os IDs dos campeonatos disponíveis utilize o endpoint /v1/campeonatos
+
+Exemplo
+
+curl -X GET https://api.api-futebol.com.br/v1/campeonatos/10/rodadas \
+-H "Authorization: Bearer [API_KEY]"
+
+Widget de Rodadas
+O Widget de Rodadas é projetado para fornecer uma visão abrangente das rodadas em torneios ou campeonatos, permitindo aos usuários acessar resultados de jogos, datas e outras informações relevantes de cada rodada. Ele é uma ferramenta interativa que pode ser facilmente integrada a sites, aplicativos ou plataformas digitais, oferecendo aos visitantes uma visão clara e atualizada dos jogos e resultados de seus times favoritos.
+
+Como Integrar o Widget de Rodadas
+
+Adicione o seguinte código <iframe> onde você deseja exibir o widget em sua página:
+<!-- API Futebol Widget de Rodadas --> <iframe src="https://api.api-futebol.com.br/v1/widgets/rodadas?client_id=[CLIENT_ID]" title="API Futebol" width="100%" frameborder="0" style="height: 100%; min-height: 700px; max-width: 300px;"> </iframe>
+
+API_KEY=live_31bd1db3bed23ec970afb0cdfe509e
+CLIENT_ID=26A92XZKT5AW
