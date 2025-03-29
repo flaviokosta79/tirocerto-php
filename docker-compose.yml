@@ -62,6 +62,21 @@ services:
     networks:
       - tirocerto_network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: tirocerto_phpmyadmin
+    ports:
+      - "8081:80" # Acessível em http://localhost:8081
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+      PMA_ARBITRARY: 1
+    depends_on:
+      - mysql
+    networks:
+      - tirocerto_network
+
 volumes:
   mysql_data:
 

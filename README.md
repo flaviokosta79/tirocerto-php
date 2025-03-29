@@ -53,6 +53,7 @@ docker ps
 
 - Frontend: http://localhost:8080
 - API Node.js (cache): http://localhost:3000
+- phpMyAdmin: http://localhost:8081
 - Banco de dados MySQL: localhost:3306
 
 ## Comandos Úteis
@@ -90,6 +91,12 @@ SHOW TABLES;
 # Limpar cache
 docker exec -it tirocerto_mysql mysql -u root -prootsecret -e 'USE tirocerto_db; DELETE FROM cache_data;'
 ```
+
+### Acesso ao phpMyAdmin
+
+- URL: http://localhost:8081
+- Usuário: tirocerto_user
+- Senha: usersecret
 
 ## Estrutura do Projeto
 
