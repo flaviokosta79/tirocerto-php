@@ -21,7 +21,7 @@ const dbConfig = {
 
 // Configurações da API externa
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.api-futebol.com.br/v1';
-const API_KEY = process.env.API_KEY || '';
+const API_KEY = process.env.API_FOOTBALL_KEY || '';
 
 // Configuração do Axios para a API externa
 const api = axios.create({
@@ -69,15 +69,23 @@ async function fetchAndCache(endpoint, cacheKey, cacheTime) {
         const response = await api.get(endpoint);
         const data = response.data;
         
+        // Verifica se os dados estão em formato válido
+        if (typeof data !== 'object' || data === null) {
+            throw new Error('Dados retornados pela API não estão em formato válido');
+        }
+        
+        // Converte para string JSON
+        const jsonString = JSON.stringify(data);
+        
         // Salva no cache
         await db.execute(
-            'INSERT INTO cache (chave, valor, expira_em) VALUES (?, ?, ?) ' +
-            'ON DUPLICATE KEY UPDATE valor = ?, expira_em = ?',
+            'INSERT INTO cache_data (cache_key, data, expires_at) VALUES (?, ?, ?) ' +
+            'ON DUPLICATE KEY UPDATE data = ?, expires_at = ?',
             [
                 cacheKey,
-                JSON.stringify(data),
+                jsonString,
                 new Date(Date.now() + cacheTime * 1000),
-                JSON.stringify(data),
+                jsonString,
                 new Date(Date.now() + cacheTime * 1000)
             ]
         );
@@ -94,13 +102,20 @@ async function getCachedData(endpoint, cacheKey, cacheTime) {
     try {
         // Tenta pegar do cache
         const [rows] = await db.execute(
-            'SELECT valor FROM cache WHERE chave = ? AND expira_em > NOW()',
+            'SELECT data FROM cache_data WHERE cache_key = ? AND expires_at > NOW()',
             [cacheKey]
         );
         
         if (rows.length > 0) {
             console.log(`Cache HIT para ${cacheKey}`);
-            return JSON.parse(rows[0].valor);
+            try {
+                const parsedData = JSON.parse(rows[0].data);
+                return parsedData;
+            } catch (parseError) {
+                console.error(`Erro ao parsear JSON do cache para ${cacheKey}:`, parseError.message);
+                // Se o JSON estiver corrompido, tenta buscar na API
+                return await fetchAndCache(endpoint, cacheKey, cacheTime);
+            }
         }
         
         // Se não tiver no cache ou estiver expirado, busca na API
@@ -111,12 +126,19 @@ async function getCachedData(endpoint, cacheKey, cacheTime) {
         // Tenta retornar cache expirado como fallback
         try {
             const [rows] = await db.execute(
-                'SELECT valor FROM cache WHERE chave = ? ORDER BY expira_em DESC LIMIT 1',
+                'SELECT data FROM cache_data WHERE cache_key = ? ORDER BY expires_at DESC LIMIT 1',
                 [cacheKey]
             );
             if (rows.length > 0) {
                 console.log(`Retornando cache antigo para ${cacheKey} devido a erro na API.`);
-                return JSON.parse(rows[0].valor);
+                try {
+                    const parsedData = JSON.parse(rows[0].data);
+                    return parsedData;
+                } catch (parseError) {
+                    console.error(`Erro ao parsear JSON do cache antigo para ${cacheKey}:`, parseError.message);
+                    // Se o JSON estiver corrompido, tenta buscar na API
+                    return await fetchAndCache(endpoint, cacheKey, cacheTime);
+                }
             }
         } catch (fallbackError) {
             console.error('Erro no fallback do cache:', fallbackError.message);
@@ -199,7 +221,7 @@ cron.schedule('0 8 * * *', async () => {
                 await fetchAndCache(endpoint, cacheKey, CACHE_TEMPO_RODADA);
                 console.log(`Cache de jogos da rodada ${rodada} atualizado via cron.`);
             } catch (err) {
-                console.error(`Erro ao atualizar rodada ${rodada}:`, err.message);
+                console.error(`Erro ao atualizar cache da rodada ${rodada}:`, err.message);
             }
         }
     } catch (error) {
